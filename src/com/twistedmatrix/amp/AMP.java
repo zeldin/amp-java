@@ -163,9 +163,12 @@ public class AMP extends AMPParser {
 		// We have method and an array of parameters, time to call it.
 		try {
 		    Object result = m.invoke(this, mparams);
-		    if (result == null) {
+		    final byte[] ask = box.get("_ask");
+		    if (ask == null) {
+			/* No response requested */
+		    } else if (result == null) {
 			AMPBox emptyResponse = new AMPBox();
-			emptyResponse.put("_answer", box.get("_ask"));
+			emptyResponse.put("_answer", ask);
 			this.sendBox(emptyResponse);
 		    } else if (result instanceof Deferred) {
 			Deferred d = (Deferred) result;
@@ -183,10 +186,10 @@ public class AMP extends AMPParser {
 			    }
 			}
 			// XXX TODO: addErrback
-			d.addCallback(new SuccessHandler(box.get("_ask")));
+			d.addCallback(new SuccessHandler(ask));
 		    } else {
 			AMPBox resultBox = new AMPBox();
-			resultBox.put("_answer", box.get("_ask"));
+			resultBox.put("_answer", ask);
 			resultBox.extractFrom(result);
 			this.sendBox(resultBox);
 		    }
