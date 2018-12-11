@@ -499,7 +499,10 @@ public class Reactor {
 
          public void doConnect() throws Throwable {
 	    try {
-		this.channel.finishConnect();
+		if (!this.channel.finishConnect()) {
+		    return;
+		}
+		_key.interestOps(_key.interestOps() & ~SelectionKey.OP_CONNECT);
 		super.startReading();
 		this.protocol.makeConnection(this);
 	    } catch (ConnectException e) {
@@ -530,7 +533,10 @@ public class Reactor {
 	@Override public void doConnect() throws Throwable {
 	    try {
 		String[] ecs = this.clientFactory.getEnabledCipherSuites();
-		this.channel.finishConnect();
+		if (!this.channel.finishConnect()) {
+		    return;
+		}
+		_key.interestOps(_key.interestOps() & ~SelectionKey.OP_CONNECT);
 		this.engine = _ctx.createSSLEngine();
 
 		if (ecs != null && ecs.length > 0)
@@ -556,7 +562,7 @@ public class Reactor {
         while (0 != _pendingCalls.size()) {
             try {
                 long then = _pendingCalls.firstKey();
-                if (then < now) {
+                if (then <= now) {
                     Runnable r = _pendingCalls.remove((Object) new Long(then));
                     r.run();
                 } else {
