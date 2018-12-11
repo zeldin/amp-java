@@ -120,12 +120,16 @@ public class AMP extends AMPParser {
         }
 
         if ("_answer".equals(msgtype)) {
-            RemoteCommand rc = this._remotes.get(cmdprop);
-            box.fillOut(rc.getResponse());
-            rc.getDeferred().callback(rc.getResponse());
+            RemoteCommand rc = this._remotes.remove(cmdprop);
+            if (rc != null) {
+                box.fillOut(rc.getResponse());
+                rc.getDeferred().callback(rc.getResponse());
+            }
         } else if ("_error".equals(msgtype)) {
-            RemoteCommand rc = this._remotes.get(cmdprop);
-            rc.getDeferred().errback(new Failure(box.fillError()));
+            RemoteCommand rc = this._remotes.remove(cmdprop);
+            if (rc != null) {
+                rc.getDeferred().errback(new Failure(box.fillError()));
+            }
         } else if ("_command".equals(msgtype)) {
 	    Method m = null;
 	    Object[] mparams = null;
@@ -233,5 +237,13 @@ public class AMP extends AMPParser {
             return;
         }
         t.write(box.encode());
+    }
+
+    public void cancelRemotes(Failure failure)
+    {
+        for (RemoteCommand rc : this._remotes.values()) {
+            rc.getDeferred().errback(failure);
+        }
+        this._remotes.clear();
     }
 }
