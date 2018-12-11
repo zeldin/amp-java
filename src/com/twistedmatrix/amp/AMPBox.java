@@ -30,6 +30,19 @@ import java.util.HashSet;
  */
 
 public class AMPBox implements Map<byte[], byte[]> {
+
+    public static class BoxedThrowable extends Throwable {
+        private final String code;
+        private final String description;
+        public String getCode() { return code; }
+        public String getDescription() { return description; }
+        public BoxedThrowable(String code, String description) {
+            super(code + " " + description);
+            this.code = code;
+            this.description = description;
+        }
+    }
+
     private ArrayList<Pair> pairs;
 
     public AMPBox() {
@@ -117,7 +130,7 @@ public class AMPBox implements Map<byte[], byte[]> {
 	String description = (String) getAndDecode("_error_description",
 						   String.class);
 
-	return new Throwable(code + " " + description);
+	return new BoxedThrowable(code, description);
     }
 
     /**
