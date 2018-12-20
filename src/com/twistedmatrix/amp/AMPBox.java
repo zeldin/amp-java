@@ -426,47 +426,45 @@ public class AMPBox implements Map<byte[], byte[]> {
 		for (Field f: fields) params.put(f.getName(), f.getType());
 
 		while (toDecode.length > 1) {
+		    Map<String,Object> values =new HashMap<String,Object>();
 		    int tdlen=(Int16StringReceiver.toInt(toDecode[0])*256) +
 			Int16StringReceiver.toInt(toDecode[1]);
-		    if (tdlen > 0) {
-			Map<String,Object> values =new HashMap<String,Object>();
-			for (String param: params.keySet()) {
-			    byte[] hunk = new byte[tdlen];
-			    System.arraycopy(toDecode, 2, hunk, 0, tdlen);
-			    byte[] oldbuf = toDecode;
-			    int newlen = oldbuf.length - tdlen - 2;
-			    toDecode = new byte[newlen];
-			    System.arraycopy(oldbuf,tdlen+2,toDecode,0,newlen);
-			    String key = (String) decodeObject(hunk,
-							       String.class,
-							       lvals);
-
-			    tdlen=(Int16StringReceiver.toInt(toDecode[0])*256) +
-				Int16StringReceiver.toInt(toDecode[1]);
-			    hunk = new byte[tdlen];
-			    System.arraycopy(toDecode, 2, hunk, 0, tdlen);
-			    oldbuf = toDecode;
-			    newlen = oldbuf.length - tdlen - 2;
-			    toDecode = new byte[newlen];
-			    System.arraycopy(oldbuf,tdlen+2,toDecode,0,newlen);
-			    Object value = decodeObject(hunk,params.get(key),
-							lvals);
-			    values.put(key, value);
-			}
-
-			try {
-			    Object obj = t.newInstance();
-
-			    for (Field f: fields)
-				f.set(obj, values.get(f.getName()));
-			    result.add(obj);
-			} catch (Exception e) { e.printStackTrace(); }
-		    } else {
+		    while (tdlen > 0) {
+			byte[] hunk = new byte[tdlen];
+			System.arraycopy(toDecode, 2, hunk, 0, tdlen);
 			byte[] oldbuf = toDecode;
-			int newlen = oldbuf.length - 2;
+			int newlen = oldbuf.length - tdlen - 2;
 			toDecode = new byte[newlen];
-			System.arraycopy(oldbuf,2,toDecode,0,newlen);
+			System.arraycopy(oldbuf,tdlen+2,toDecode,0,newlen);
+			String key = (String) decodeObject(hunk,
+							   String.class,
+							   lvals);
+
+			tdlen=(Int16StringReceiver.toInt(toDecode[0])*256) +
+			    Int16StringReceiver.toInt(toDecode[1]);
+			hunk = new byte[tdlen];
+			System.arraycopy(toDecode, 2, hunk, 0, tdlen);
+			oldbuf = toDecode;
+			newlen = oldbuf.length - tdlen - 2;
+			toDecode = new byte[newlen];
+			System.arraycopy(oldbuf,tdlen+2,toDecode,0,newlen);
+			Object value = decodeObject(hunk,params.get(key),
+						    lvals);
+			values.put(key, value);
+			tdlen=(Int16StringReceiver.toInt(toDecode[0])*256) +
+			    Int16StringReceiver.toInt(toDecode[1]);
 		    }
+		    try {
+			Object obj = t.newInstance();
+
+			for (Field f: fields)
+			    f.set(obj, values.get(f.getName()));
+			result.add(obj);
+		    } catch (Exception e) { e.printStackTrace(); }
+		    byte[] oldbuf = toDecode;
+		    int newlen = oldbuf.length - 2;
+		    toDecode = new byte[newlen];
+		    System.arraycopy(oldbuf,2,toDecode,0,newlen);
 		}
 		return result;
 	    } else if (t == List.class || t == ArrayList.class) {
@@ -580,9 +578,9 @@ public class AMPBox implements Map<byte[], byte[]> {
 			}
 		    } catch (Exception e) { e.printStackTrace(); }
 		}
+		stream.write(0);
+		stream.write(0);
 	    }
-	    stream.write(0);
-	    stream.write(0);
 
 	    value = stream.toByteArray();
 	} else if (t == List.class || t == ArrayList.class) {
