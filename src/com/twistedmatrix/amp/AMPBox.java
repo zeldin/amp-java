@@ -387,25 +387,17 @@ public class AMPBox implements Map<byte[], byte[]> {
 	    } else if (t == Calendar.class ||
 		       t.getSuperclass() == Calendar.class) {
 		String s = asString(toDecode);
-		Date date = new Date();
 		SimpleDateFormat dtf =
-		    new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSSSS");
+		    new SimpleDateFormat(s.length() == 32?
+					 "yyyy-MM-dd'T'HH:mm:ss.SSSX" :
+					 "yyyy-MM-dd'T'HH:mm:ss.SSS");
 		try {
-		    date = dtf.parse(s);
+		    dtf.parse(s.substring(0, 23) + s.substring(26));
 		} catch (ParseException pe) {
 		    throw new Error ("Unable to parse date '" + s + "'!");
 		}
 
-		Calendar cal = Calendar.getInstance();
-		cal.setTime(date);
-
-		if (s.length() == 32) {
-		    String tzid = "UTC" + s.substring(26, 32);
-		    TimeZone tz = TimeZone.getTimeZone(tzid);
-		    cal.setTimeZone(tz);
-		}
-
-		return cal;
+		return dtf.getCalendar();
 	    } else if (t.getSuperclass() == AmpItem.class) {
 		List<Object> result = new ArrayList<Object>();
 		Map<String,Class> params = new HashMap<String,Class>();
