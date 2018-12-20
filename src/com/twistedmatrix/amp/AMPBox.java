@@ -567,9 +567,9 @@ public class AMPBox implements Map<byte[], byte[]> {
 			}
 		    } catch (Exception e) { e.printStackTrace(); }
 		}
+		stream.write(0);
+		stream.write(0);
 	    }
-	    stream.write(0);
-	    stream.write(0);
 
 	    value = stream.toByteArray();
 	} else if (t == List.class || t == ArrayList.class) {
