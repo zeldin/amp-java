@@ -389,7 +389,7 @@ public class AMPBox implements Map<byte[], byte[]> {
 		String s = asString(toDecode);
 		SimpleDateFormat dtf =
 		    new SimpleDateFormat(s.length() == 32?
-					 "yyyy-MM-dd'T'HH:mm:ss.SSSX" :
+					 "yyyy-MM-dd'T'HH:mm:ss.SSSXXX" :
 					 "yyyy-MM-dd'T'HH:mm:ss.SSS");
 		try {
 		    dtf.parse(s.substring(0, 23) + s.substring(26));
