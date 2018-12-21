@@ -517,27 +517,13 @@ public class AMPBox implements Map<byte[], byte[]> {
         } else if (t == BigDecimal.class) {
 	    value = asBytes(((BigDecimal) o).toString());
 	} else if (t == Calendar.class || t.getSuperclass() == Calendar.class) {
-	    String dir = "+";
 	    Calendar cal = (Calendar) o;
-	    TimeZone tz = cal.getTimeZone();
-	    long tzhours = TimeUnit.MILLISECONDS.toHours(tz.getRawOffset());
-	    long tzmins = TimeUnit.MILLISECONDS.toMinutes(tz.getRawOffset())
-		- TimeUnit.HOURS.toMinutes(tzhours);
-	    if (tzhours < 0) {
-		dir = "-";
-		tzhours = 0 - tzhours;
-	    }
-
-	    String str = String.format("%04d-%02d-%02dT%02d:%02d:%02d.%03d000" +
-				       "%s%02d:%02d", cal.get(cal.YEAR),
-				       cal.get(cal.MONTH),
-				       cal.get(cal.DAY_OF_MONTH),
-				       cal.get(cal.HOUR_OF_DAY),
-				       cal.get(cal.MINUTE), cal.get(cal.SECOND),
-				       cal.get(cal.MILLISECOND),
-				       dir, tzhours, tzmins);
-
-	    value = asBytes(str);
+	    int offs = cal.get(Calendar.ZONE_OFFSET) + cal.get(Calendar.DST_OFFSET);
+	    SimpleDateFormat dtf = new SimpleDateFormat(offs == 0?
+							"yyyy-MM-dd'T'HH:mm:ss.SSS'000-00:00'" :
+							"yyyy-MM-dd'T'HH:mm:ss.SSS'000'XXX");
+	    dtf.setCalendar(cal);
+	    value = asBytes(dtf.format(cal.getTime()));
 	} else if (t.getSuperclass() == AmpItem.class) {
 	    Field[] fields = t.getFields();
 	    ByteArrayOutputStream stream = new ByteArrayOutputStream();
