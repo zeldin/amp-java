@@ -559,20 +559,26 @@ public class Reactor {
      * timeout.  Negative timeout means "no timeout".
      */
     private long runUntilCurrent(long now) {
-        while (0 != _pendingCalls.size()) {
-            try {
-                long then = _pendingCalls.firstKey();
-                if (then <= now) {
-                    Runnable r = _pendingCalls.remove((Object) new Long(then));
-                    r.run();
-                } else {
-                    return then - now;
-                }
-            } catch (NoSuchElementException nsee) {
-                nsee.printStackTrace();
-                throw new Error("Impossible; _pendingCalls.size was not zero");
-            }
-        }
+	for (;;) {
+	    Runnable r;
+	    synchronized(_pendingCalls) {
+		if (0 == _pendingCalls.size()) {
+		    break;
+		}
+		try {
+		    long then = _pendingCalls.firstKey();
+		    if (then <= now) {
+			r = _pendingCalls.remove((Object) new Long(then));
+		    } else {
+			return then - now;
+		    }
+		} catch (NoSuchElementException nsee) {
+		    nsee.printStackTrace();
+		    throw new Error("Impossible; _pendingCalls.size was not zero");
+		}
+	    }
+	    r.run();
+	}
         return -1;
     }
 
