@@ -12,7 +12,9 @@ import java.nio.channels.SocketChannel;
 import java.nio.channels.SelectionKey;
 import java.util.List;
 import java.util.ArrayList;
-import java.util.TreeMap;
+import java.util.AbstractMap;
+import java.util.Map;
+import java.util.PriorityQueue;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 import java.util.concurrent.Executor;
@@ -36,12 +38,12 @@ public class Reactor {
     private        TCPConnection          _connection;
     private        Selector               _selector;
     private        boolean                _running;
-    private        TreeMap<Long,Runnable> _pendingCalls;
+    private        PriorityQueue<Map.Entry<Long,Runnable>> _pendingCalls;
 
     public Reactor () throws IOException {
         _selector = Selector.open();
         _running = false;
-        _pendingCalls = new TreeMap<Long,Runnable>();
+        _pendingCalls = new PriorityQueue<>();
     }
 
     /* It appears that this interface is actually unnamed in
@@ -562,19 +564,16 @@ public class Reactor {
 	for (;;) {
 	    Runnable r;
 	    synchronized(_pendingCalls) {
-		if (0 == _pendingCalls.size()) {
+		Map.Entry<Long,Runnable> head = _pendingCalls.peek();
+		if (head == null) {
 		    break;
 		}
-		try {
-		    long then = _pendingCalls.firstKey();
-		    if (then <= now) {
-			r = _pendingCalls.remove((Object) new Long(then));
-		    } else {
-			return then - now;
-		    }
-		} catch (NoSuchElementException nsee) {
-		    nsee.printStackTrace();
-		    throw new Error("Impossible; _pendingCalls.size was not zero");
+		long then = head.getKey();
+		if (then <= now) {
+		    r = head.getValue();
+		    _pendingCalls.remove(head);
+		} else {
+		    return then - now;
 		}
 	    }
 	    r.run();
@@ -617,7 +616,7 @@ public class Reactor {
     public void callLater(double secondsLater, Runnable runme) {
         long millisLater = (long) (secondsLater * 1000.0);
         synchronized(_pendingCalls) {
-            _pendingCalls.put(System.currentTimeMillis() + millisLater, runme);
+            _pendingCalls.add(new AbstractMap.SimpleImmutableEntry<>(System.currentTimeMillis() + millisLater, runme));
             // This isn't actually an interestOps
             interestOpsChanged();
         }
