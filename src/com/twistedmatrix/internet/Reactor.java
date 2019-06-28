@@ -13,6 +13,7 @@ import java.nio.channels.SelectionKey;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.AbstractMap;
+import java.util.Comparator;
 import java.util.Map;
 import java.util.PriorityQueue;
 import java.util.Iterator;
@@ -43,7 +44,11 @@ public class Reactor {
     public Reactor () throws IOException {
         _selector = Selector.open();
         _running = false;
-        _pendingCalls = new PriorityQueue<>();
+        _pendingCalls = new PriorityQueue<>(11, new Comparator<Map.Entry<Long,Runnable>>() {
+	    public int compare(Map.Entry<Long,Runnable> o1, Map.Entry<Long,Runnable> o2) {
+	      return o1.getKey().compareTo(o2.getKey());
+	    }
+	});
     }
 
     /* It appears that this interface is actually unnamed in
