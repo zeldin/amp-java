@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.net.ConnectException;
 import java.nio.ByteBuffer;
 import java.nio.channels.Selector;
 import java.nio.channels.ServerSocketChannel;
@@ -502,7 +501,7 @@ public class Reactor {
 		this.channel.finishConnect();
 		super.startReading();
 		this.protocol.makeConnection(this);
-	    } catch (ConnectException e) {
+	    } catch (IOException e) {
 		connectionFailed(e);
 	    }
         }
@@ -542,7 +541,7 @@ public class Reactor {
 		super.startReading();
 		this.wrap(); // Initiate the handshake
 		while (this.step()) { continue; } // Complete the handshake
-	    } catch (ConnectException e) {
+	    } catch (IOException e) {
 		connectionFailed(e);
 	    }
 	}
